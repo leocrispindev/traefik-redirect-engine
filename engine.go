@@ -4,11 +4,13 @@ import (
 	"context"
 	"net/http"
 	model "traefik-redirect-engine/internal/model"
+	"traefik-redirect-engine/internal/service"
 )
 
 type Config struct {
 	IsRedirectEnable bool   `json:"isRedirectEnable"`
 	Source           string `json:"source"`
+	FilePath         string `json:"filePath"`
 }
 
 // plugin configuration
@@ -21,6 +23,7 @@ type Engine struct {
 	isEnable      bool
 	Regex         string
 	RedirectRules map[string]model.Rule
+	FilePath      string
 }
 
 // create plugin instance
@@ -29,6 +32,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	return &Engine{
 		next:     next,
 		isEnable: config.IsRedirectEnable,
+		FilePath: config.FilePath,
 	}, nil
 }
 
@@ -38,5 +42,14 @@ func (e *Engine) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		e.next.ServeHTTP(rw, req)
 	}
 
-	e.next.ServeHTTP(rw, req)
+	rule, exists := e.RedirectRules[req.Host]
+	if !exists {
+		e.next.ServeHTTP(rw, req)
+	}
+
+	destinyURL := service.GetDestinyUrl(rule, req)
+
+	http.Redirect(rw, req, destinyURL, http.StatusPermanentRedirect)
+
+	//e.next.ServeHTTP(rw, req)
 }
