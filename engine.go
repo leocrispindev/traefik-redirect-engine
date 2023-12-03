@@ -7,15 +7,9 @@ import (
 	"traefik-redirect-engine/internal/service"
 )
 
-type Config struct {
-	IsRedirectEnable bool   `json:"isRedirectEnable"`
-	Source           string `json:"source"`
-	FilePath         string `json:"filePath"`
-}
-
 // plugin configuration
-func CreateConfig() *Config {
-	return &Config{}
+func CreateConfig() *model.Config {
+	return &model.Config{}
 }
 
 type Engine struct {
@@ -27,13 +21,18 @@ type Engine struct {
 }
 
 // create plugin instance
-func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config *model.Config, name string) (http.Handler, error) {
 	// ...
-	return &Engine{
-		next:     next,
-		isEnable: config.IsRedirectEnable,
-		FilePath: config.FilePath,
-	}, nil
+	result := Engine{
+		next:          next,
+		isEnable:      config.IsRedirectEnable,
+		FilePath:      config.FilePath,
+		RedirectRules: service.GetRules(config),
+	}
+
+	go service.StartUpdateRedirectRulesJob(config, result.RedirectRules)
+
+	return &result, nil
 }
 
 func (e *Engine) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -42,14 +41,12 @@ func (e *Engine) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		e.next.ServeHTTP(rw, req)
 	}
 
-	rule, exists := e.RedirectRules[req.Host]
-	if !exists {
+	rule, found := e.RedirectRules[req.Host]
+	if !found {
 		e.next.ServeHTTP(rw, req)
 	}
 
 	destinyURL := service.GetDestinyUrl(rule, req)
 
 	http.Redirect(rw, req, destinyURL, http.StatusPermanentRedirect)
-
-	//e.next.ServeHTTP(rw, req)
 }
