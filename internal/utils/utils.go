@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"net/http"
+	"os"
 )
 
 func GetFullUrl(r *http.Request) string {
@@ -16,4 +17,8 @@ func getProtocol(r *http.Request) string {
 		return "https"
 	}
 	return "http"
+}
+
+func Readfile(path string) ([]byte, error) {
+	return os.ReadFile(path)
 }
