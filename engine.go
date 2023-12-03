@@ -3,8 +3,9 @@ package redirectengine
 import (
 	"context"
 	"net/http"
-	model "traefik-redirect-engine/internal/model"
-	"traefik-redirect-engine/internal/service"
+
+	model "github.com/leocrispindev/traefik-redirect-engine/internal/model"
+	"github.com/leocrispindev/traefik-redirect-engine/internal/service"
 )
 
 // plugin configuration

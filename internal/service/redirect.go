@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"traefik-redirect-engine/internal/model"
-	"traefik-redirect-engine/internal/utils"
+
+	"github.com/leocrispindev/traefik-redirect-engine/internal/model"
+	"github.com/leocrispindev/traefik-redirect-engine/internal/utils"
 )
 
 func GetDestinyUrl(rule model.Rule, req *http.Request) string {
