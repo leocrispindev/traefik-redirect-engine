@@ -1,0 +1,13 @@
+displayName: Redirect Engine
+
+type: middleware
+
+import: github.com/leocrispindev/traefik-redirect-engine
+
+summary: The RedirectEngine is a plugin for Traefik that adds redirection functionality to your routing configurations. With this plugin, you can easily set up complex redirects, customizing rules and behaviors
+
+testData: 
+  isRedirectEnable: false
+  source: file
+  filePath: ./home/rules.json
+ 
