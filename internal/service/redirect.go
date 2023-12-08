@@ -14,7 +14,7 @@ import (
 func GetDestinyUrl(rule model.Rule, req *http.Request) string {
 	fullUrl := utils.GetFullUrl(req)
 
-	result := strings.ReplaceAll(fullUrl, req.Host, rule.Destiny)
+	result := strings.Replace(fullUrl, req.Host, rule.Destiny, 1)
 
 	return result
 }
@@ -23,6 +23,7 @@ func GetRules(config *model.Config) map[string]model.Rule {
 	if !config.IsRedirectEnable {
 		return make(map[string]model.Rule)
 	}
+
 	switch config.Source {
 	case "file":
 		return GetRulesFromFile(config.FilePath)
@@ -48,13 +49,14 @@ func GetRulesFromFile(filePath string) map[string]model.Rule {
 		return result
 	}
 
-	os.Stdout.WriteString("Success loaded rules")
+	os.Stdout.WriteString("Success loaded rules from file")
 
 	return result
 }
 
 func StartUpdateRedirectRulesJob(config *model.Config, redirectRules map[string]model.Rule) {
 	go func() {
+		os.Stdout.WriteString("Started Update rules job")
 
 		for {
 			updateRedirectRules(redirectRules, GetRules(config))
@@ -65,7 +67,11 @@ func StartUpdateRedirectRulesJob(config *model.Config, redirectRules map[string]
 }
 
 func updateRedirectRules(redirectRules map[string]model.Rule, newRules map[string]model.Rule) {
+	os.Stdout.WriteString("Start update rules")
 	for key, value := range newRules {
 		redirectRules[key] = value
 	}
+
+	os.Stdout.WriteString("Finish update rules")
+
 }
