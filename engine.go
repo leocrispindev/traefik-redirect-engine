@@ -1,8 +1,9 @@
-package redirectengine
+package traefik_redirect_engine
 
 import (
 	"context"
 	"net/http"
+	"os"
 
 	model "github.com/leocrispindev/traefik-redirect-engine/internal/model"
 	"github.com/leocrispindev/traefik-redirect-engine/internal/service"
@@ -15,6 +16,7 @@ func CreateConfig() *model.Config {
 
 type Engine struct {
 	next          http.Handler
+	name          string
 	isEnable      bool
 	Regex         string
 	RedirectRules map[string]model.Rule
@@ -26,12 +28,13 @@ func New(ctx context.Context, next http.Handler, config *model.Config, name stri
 	// ...
 	result := Engine{
 		next:          next,
+		name:          "traefik redirect engine",
 		isEnable:      config.IsRedirectEnable,
 		FilePath:      config.FilePath,
 		RedirectRules: service.GetRules(config),
 	}
 
-	go service.StartUpdateRedirectRulesJob(config, result.RedirectRules)
+	//go service.StartUpdateRedirectRulesJob(config, result.RedirectRules)
 
 	return &result, nil
 }
@@ -49,5 +52,8 @@ func (e *Engine) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	destinyURL := service.GetDestinyUrl(rule, req)
 
+	os.Stdout.WriteString("Rule found, redirect destiny: " + destinyURL)
+
 	http.Redirect(rw, req, destinyURL, http.StatusPermanentRedirect)
+	//e.next.ServeHTTP(rw, req)
 }
