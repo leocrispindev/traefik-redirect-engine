@@ -3,8 +3,8 @@ package traefik_redirect_engine
 import (
 	"context"
 	"net/http"
-	"os"
 
+	log "github.com/leocrispindev/traefik-redirect-engine/internal/log"
 	model "github.com/leocrispindev/traefik-redirect-engine/internal/model"
 	"github.com/leocrispindev/traefik-redirect-engine/internal/service"
 )
@@ -34,7 +34,7 @@ func New(ctx context.Context, next http.Handler, config *model.Config, name stri
 		RedirectRules: service.GetRules(config),
 	}
 
-	//go service.StartUpdateRedirectRulesJob(config, result.RedirectRules)
+	go service.StartUpdateRedirectRulesJob(config, result.RedirectRules)
 
 	return &result, nil
 }
@@ -52,7 +52,7 @@ func (e *Engine) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	destinyURL := service.GetDestinyUrl(rule, req)
 
-	os.Stdout.WriteString("Rule found, redirect destiny: " + destinyURL)
+	log.Info("Rule found, redirect destiny: " + destinyURL)
 
 	http.Redirect(rw, req, destinyURL, http.StatusPermanentRedirect)
 	//e.next.ServeHTTP(rw, req)

@@ -3,10 +3,10 @@ package service
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
+	log "github.com/leocrispindev/traefik-redirect-engine/internal/log"
 	"github.com/leocrispindev/traefik-redirect-engine/internal/model"
 	"github.com/leocrispindev/traefik-redirect-engine/internal/utils"
 )
@@ -37,26 +37,26 @@ func GetRulesFromFile(filePath string) map[string]model.Rule {
 
 	body, err := utils.Readfile(filePath)
 	if err != nil {
-		os.Stderr.WriteString("Error on read rules file: " + err.Error())
+		log.Error("Error on read rules file: " + err.Error())
 		return result
 	}
 
 	err = json.Unmarshal(body, &result)
 
 	if err != nil {
-		os.Stderr.WriteString("Error on unmarshal rules file " + err.Error())
+		log.Error("Error on unmarshal rules file " + err.Error())
 
 		return result
 	}
 
-	os.Stdout.WriteString("Success loaded rules from file")
+	log.Info("Success loaded rules from file")
 
 	return result
 }
 
 func StartUpdateRedirectRulesJob(config *model.Config, redirectRules map[string]model.Rule) {
 	go func() {
-		os.Stdout.WriteString("Started Update rules job")
+		log.Info("Started Update rules job")
 
 		for {
 			updateRedirectRules(redirectRules, GetRules(config))
@@ -67,11 +67,11 @@ func StartUpdateRedirectRulesJob(config *model.Config, redirectRules map[string]
 }
 
 func updateRedirectRules(redirectRules map[string]model.Rule, newRules map[string]model.Rule) {
-	os.Stdout.WriteString("Start update rules")
+	log.Info("Start update rules")
 	for key, value := range newRules {
 		redirectRules[key] = value
 	}
 
-	os.Stdout.WriteString("Finish update rules")
+	log.Info("Finish update rules")
 
 }
