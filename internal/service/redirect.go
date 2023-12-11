@@ -55,14 +55,12 @@ func GetRulesFromFile(filePath string) map[string]model.Rule {
 }
 
 func StartUpdateRedirectRulesJob(config *model.Config, redirectRules map[string]model.Rule) {
-	go func() {
-		log.Info("Started Update rules job")
+	log.Info("Started Update rules job")
 
-		for {
-			updateRedirectRules(redirectRules, GetRules(config))
-			time.Sleep(30 * time.Second)
-		}
-	}()
+	for {
+		updateRedirectRules(redirectRules, GetRules(config))
+		time.Sleep(30 * time.Second)
+	}
 
 }
 
