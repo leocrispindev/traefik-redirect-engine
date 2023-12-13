@@ -1,6 +1,11 @@
 package model
 
 type Rule struct {
-	Destiny string `json:"destiny"`
-	URIs    []string
+	RedirectUrl string `json:"url"`
+	URIs        []UriRule
+}
+
+type UriRule struct {
+	UriPath        string `json:"uriPath"`
+	URLRedirectURI string `json:"url"`
 }
