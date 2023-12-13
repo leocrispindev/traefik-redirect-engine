@@ -2,7 +2,9 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -14,9 +16,49 @@ import (
 func GetDestinyUrl(rule model.Rule, req *http.Request) string {
 	fullUrl := utils.GetFullUrl(req)
 
-	result := strings.Replace(fullUrl, req.Host, rule.Destiny, 1)
+	redirectUrlFromURI, found := hasUriRule(rule, req.RequestURI)
 
-	return result
+	if found {
+		return replaceUrl(fullUrl, req.Host, redirectUrlFromURI)
+	}
+
+	return replaceUrl(fullUrl, req.Host, rule.RedirectUrl)
+
+}
+
+func replaceUrl(fullUrl string, host string, redirectUrl string) string {
+	return strings.Replace(fullUrl, host, redirectUrl, 1)
+
+}
+
+func hasUriRule(rule model.Rule, uri string) (string, bool) {
+	for _, ruleUri := range rule.URIs {
+		match, err := matchUri(ruleUri.UriPath, uri)
+		if err != nil || !match {
+			continue
+		}
+
+		return ruleUri.URLRedirectURI, true
+	}
+
+	return "", false
+}
+
+func matchUri(ruleUri string, requestUri string) (bool, error) {
+	regex, err := compileRegex(ruleUri)
+	if err != nil {
+		return false, err
+	}
+
+	return regex.Match([]byte(requestUri)), nil
+
+}
+
+func compileRegex(uriRule string) (*regexp.Regexp, error) {
+	regexString := fmt.Sprintf(`^%s`, regexp.QuoteMeta(uriRule))
+
+	// Compilar a regex
+	return regexp.Compile(regexString)
 }
 
 func GetRules(config *model.Config) map[string]model.Rule {
