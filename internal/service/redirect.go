@@ -13,6 +13,8 @@ import (
 	"github.com/leocrispindev/traefik-redirect-engine/internal/utils"
 )
 
+var RedirectUriRegexMap = make(map[string][]*regexp.Regexp)
+
 func GetDestinyUrl(rule model.Rule, req *http.Request) string {
 	fullUrl := utils.GetFullUrl(req)
 
@@ -32,26 +34,49 @@ func replaceUrl(fullUrl string, host string, redirectUrl string) string {
 }
 
 func hasUriRule(rule model.Rule, uri string) (string, bool) {
-	for _, ruleUri := range rule.URIs {
-		match, err := matchUri(ruleUri.UriPath, uri)
+	uriRulesByHost := RedirectUriRegexMap[rule.RedirectUrl]
+
+	if uriRulesByHost == nil {
+		return "", false
+	}
+
+	for i := 0; i < len(uriRulesByHost)-1; i++ {
+		match, err := matchUri(uriRulesByHost[i], uri)
+
 		if err != nil || !match {
 			continue
 		}
 
-		return ruleUri.URLRedirectURI, true
+		return rule.URIs[i].URLRedirectURI, true
 	}
 
 	return "", false
 }
 
-func matchUri(ruleUri string, requestUri string) (bool, error) {
-	regex, err := compileRegex(ruleUri)
-	if err != nil {
-		return false, err
-	}
+func matchUri(regex *regexp.Regexp, requestUri string) (bool, error) {
 
 	return regex.Match([]byte(requestUri)), nil
 
+}
+
+func CompileAllUriRules(rules map[string]model.Rule) {
+
+	for host, rule := range rules {
+
+		var regex []*regexp.Regexp
+
+		for _, uri := range rule.URIs {
+			rgx, err := compileRegex(uri.URLRedirectURI)
+
+			if err != nil {
+				continue
+			}
+
+			regex = append(regex, rgx)
+		}
+
+		RedirectUriRegexMap[host] = regex
+	}
 }
 
 func compileRegex(uriRule string) (*regexp.Regexp, error) {
