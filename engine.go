@@ -3,6 +3,7 @@ package traefik_redirect_engine
 import (
 	"context"
 	"net/http"
+	"regexp"
 
 	log "github.com/leocrispindev/traefik-redirect-engine/internal/log"
 	model "github.com/leocrispindev/traefik-redirect-engine/internal/model"
@@ -15,12 +16,13 @@ func CreateConfig() *model.Config {
 }
 
 type Engine struct {
-	next          http.Handler
-	name          string
-	isEnable      bool
-	Regex         string
-	RedirectRules map[string]model.Rule
-	FilePath      string
+	next                http.Handler
+	name                string
+	isEnable            bool
+	Regex               string
+	RedirectRules       map[string]model.Rule
+	FilePath            string
+	RedirectUriRegexMap map[string][]*regexp.Regexp
 }
 
 // create plugin instance
@@ -33,6 +35,8 @@ func New(ctx context.Context, next http.Handler, config *model.Config, name stri
 		FilePath:      config.FilePath,
 		RedirectRules: service.GetRules(config),
 	}
+
+	service.CompileAllUriRules(result.RedirectRules)
 
 	go service.StartUpdateRedirectRulesJob(config, result.RedirectRules)
 
